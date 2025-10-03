@@ -1,0 +1,93 @@
+✅ UrbanWell NASA API - Installation Checklist
+==============================================
+
+Before you start, make sure you have:
+
+📋 REQUIREMENTS CHECKLIST:
+
+□ Python 3.8+ installed
+  → Windows: https://python.org
+  → Mac: brew install python3
+  → Linux: sudo apt install python3 python3-pip
+
+□ NASA Earthdata account (FREE)
+  → Go to: https://urs.earthdata.nasa.gov/
+  → Register with email verification
+  → Remember username and password
+
+□ Internet connection 
+  → Needed to download NASA libraries
+  → Needed to access NASA satellites
+
+□ 500MB free disk space
+  → For Python libraries and NASA data cache
+
+🚀 QUICK SETUP STEPS:
+
+1. CREDENTIALS:
+   □ Copy .env.template to .env
+   □ Edit .env with your NASA username/password
+   □ Save the file
+
+2. INSTALLATION:
+   □ Run: pip install -r requirements.txt
+   □ Wait for completion (may take 5-10 minutes)
+
+3. VERIFICATION:
+   □ Run: python check-nasa-installation.py
+   □ All checks should show ✅
+
+4. START APPLICATION:
+   □ Run: python urbanwell_nasa_backend.py
+   □ Look for "✅ NASA authentication successful"
+   □ Open: http://localhost:5000/dashboard.html
+
+🧪 SUCCESS INDICATORS:
+
+After setup, you should see:
+□ Console shows "NASA Earthdata authentication successful"
+□ Dashboard data sources show "NASA_TEMPO_OMI" (not "SIMULATION")
+□ Admin panel shows "✅ Connected" for NASA APIs
+□ Adding new cities fetches fresh satellite data
+
+🐛 TROUBLESHOOTING CHECKLIST:
+
+Problem: NASA authentication failed
+□ Check username/password at https://urs.earthdata.nasa.gov/
+□ Verify .env file has no quotes around values
+□ Confirm internet connection to NASA servers
+
+Problem: earthaccess module not found
+□ Run: pip install earthaccess
+□ Or: pip install -r requirements.txt
+
+Problem: GDAL errors (Linux)
+□ Run: sudo apt-get install gdal-bin libgdal-dev
+□ Or try conda: conda install -c conda-forge gdal
+
+Problem: Data shows "SIMULATION"
+□ This is normal - NASA servers may be temporarily down
+□ Real data will appear when servers are available
+□ Check NASA server status at https://earthdata.nasa.gov/
+
+Problem: Port 5000 already in use
+□ Edit urbanwell_nasa_backend.py line 571
+□ Change port=5000 to port=8080
+
+□ All issues resolved? Start the application!
+
+🌍 NASA DATASETS YOU'LL ACCESS:
+
+□ TEMPO - Real-time air pollution (North America, hourly)
+□ OMI/Aura - Global atmospheric data (daily)
+□ GRACE - Groundwater storage changes (monthly)
+□ MODIS - Vegetation health indices (16-day)
+□ Landsat - High-resolution land data (16-day)
+
+🏆 READY FOR NASA SPACE APPS CHALLENGE 2025!
+
+Your UrbanWell system now connects to NASA's operational 
+Earth observation satellites for real urban health monitoring.
+
+Team: Decoders - Shobhit Shukla & Charu Awasthi
+Challenge: Data Pathways to Healthy Cities and Human Settlements

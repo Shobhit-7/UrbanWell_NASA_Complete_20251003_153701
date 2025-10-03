@@ -1,0 +1,94 @@
+# UrbanWell NASA API Version - Complete Requirements
+# This file includes all dependencies for real NASA API integration
+
+# =================================================================
+# CORE WEB FRAMEWORK
+# =================================================================
+Flask==2.3.3
+flask-cors==4.0.0
+gunicorn==21.2.0
+
+# =================================================================
+# NASA API INTEGRATION
+# =================================================================
+earthaccess==0.8.0
+requests==2.31.0
+python-dotenv==1.0.0
+
+# =================================================================
+# DATA PROCESSING & SCIENTIFIC COMPUTING
+# =================================================================
+numpy==1.25.2
+pandas==2.1.4
+scipy==1.11.4
+
+# =================================================================
+# GEOSPATIAL DATA PROCESSING
+# =================================================================
+rasterio==1.3.9
+geopandas==0.14.1
+shapely==2.0.2
+pyproj==3.6.1
+netcdf4==1.6.5
+xarray==2023.11.0
+
+# =================================================================
+# DATABASE
+# =================================================================
+# SQLite is included with Python, but for production:
+# psycopg2-binary==2.9.9
+# sqlalchemy==2.0.23
+
+# =================================================================
+# DATA VISUALIZATION & PROCESSING
+# =================================================================
+matplotlib==3.8.2
+plotly==5.17.0
+
+# =================================================================
+# HTTP & API UTILITIES
+# =================================================================
+urllib3==2.1.0
+certifi==2023.11.17
+
+# =================================================================
+# DATE/TIME UTILITIES
+# =================================================================
+python-dateutil==2.8.2
+pytz==2023.3
+
+# =================================================================
+# MACHINE LEARNING (Optional - for predictions)
+# =================================================================
+# scikit-learn==1.3.2
+# tensorflow==2.15.0
+
+# =================================================================
+# CACHING (Optional - for better performance)
+# =================================================================
+# redis==5.0.1
+# flask-caching==2.1.0
+
+# =================================================================
+# DEVELOPMENT UTILITIES
+# =================================================================
+click==8.1.7
+
+# =================================================================
+# INSTALLATION NOTES:
+# =================================================================
+# Some packages require system dependencies:
+#
+# Ubuntu/Debian:
+# sudo apt-get update
+# sudo apt-get install gdal-bin libgdal-dev python3-dev build-essential
+#
+# macOS (with Homebrew):
+# brew install gdal
+#
+# Windows:
+# Use conda instead of pip for easier installation:
+# conda install -c conda-forge earthaccess rasterio geopandas
+#
+# For minimal installation (if you have issues):
+# Just install: Flask flask-cors earthaccess requests python-dotenv numpy pandas

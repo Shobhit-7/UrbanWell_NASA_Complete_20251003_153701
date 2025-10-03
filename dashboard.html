@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 UrbanWell - NASA Satellite Data Dashboard</title>
+
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            display: block;
+            margin-top: 0.2rem;
+        }
+
+        .nav-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        .nasa-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 0.3rem;
+        }
+
+        .nasa-connected {
+            background: #d5ede5;
+            color: #1e8449;
+        }
+
+        .nasa-disconnected {
+            background: #fef5e7;
+            color: #b7950b;
+        }
+
+        .container {
+            display: flex;
+            gap: 2rem;
+            padding: 2rem;
+            min-height: calc(100vh - 100px);
+        }
+
+        .sidebar {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            height: fit-content;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .main-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .location-list {
+            margin-bottom: 2rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .location-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .location-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .location-item.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .location-item h4 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .location-item small {
+            display: block;
+            opacity: 0.8;
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .data-source-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-top: 0.3rem;
+        }
+
+        .nasa-data {
+            background: #d5ede5;
+            color: #1e8449;
+        }
+
+        .simulation-data {
+            background: #fef5e7;
+            color: #b7950b;
+        }
+
+        .alerts-section {
+            margin-top: 2rem;
+        }
+
+        .alerts-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .alert.alert-warning {
+            background: #fff3cd;
+            border-color: #ffeeba;
+            color: #856404;
+        }
+
+        .alert.alert-danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            text-align: center;
+            border-left: 4px solid transparent;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-card h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .metric-sub {
+            color: #95a5a6;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .wellbeing {
+            border-left-color: #2ecc71;
+        }
+        .wellbeing .metric-value {
+            color: #2ecc71;
+        }
+
+        .air-quality {
+            border-left-color: #e74c3c;
+        }
+        .air-quality .metric-value {
+            color: #e74c3c;
+        }
+
+        .water-security {
+            border-left-color: #3498db;
+        }
+        .water-security .metric-value {
+            color: #3498db;
+        }
+
+        .vegetation {
+            border-left-color: #27ae60;
+        }
+        .vegetation .metric-value {
+            color: #27ae60;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #map {
+            height: 300px;
+            border-radius: 10px;
+            z-index: 1;
+        }
+
+        .nasa-info {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nasa-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .nasa-info p:not(:last-child) {
+            margin-bottom: 0.5rem;
+        }
+
+        .satellite-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin: 0.2rem;
+        }
+
+        .satellite-active {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid #2ecc71;
+        }
+
+        .satellite-inactive {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+            border: 1px solid #f1c40f;
+        }
+
+        .no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-good { background: #2ecc71; }
+        .status-moderate { background: #f39c12; }
+        .status-unhealthy { background: #e74c3c; }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .sidebar {
+                width: 280px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+
+            .nav-info {
+                align-items: center;
+            }
+
+            .container {
+                flex-direction: column;
+                padding: 0.5rem;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: none;
+            }
+
+            .main-content {
+                max-height: none;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🌍 UrbanWell NASA</h1>
+            <div class="subtitle">Real NASA Satellite Data for Urban Health Monitoring</div>
+        </div>
+        <div class="nav-info">
+            <div><strong>Team Decoders</strong></div>
+            <div>NASA Space Apps Challenge 2025</div>
+            <div class="nasa-status" id="nasaStatus">🔄 Checking NASA APIs...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>📍 Global Cities</h3>
+            <div id="locationList" class="location-list">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>Loading cities...</div>
+                </div>
+            </div>
+
+            <div id="alertsSection" class="alerts-section" style="display: none;">
+                <h3>🚨 Environmental Alerts</h3>
+                <div id="alertsList" class="alerts-list"></div>
+            </div>
+
+            <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 10px; font-size: 0.85rem; color: #6c757d;">
+                <strong>Quick Links:</strong><br>
+                <a href="/admin" target="_blank" style="color: #007bff; text-decoration: none;">⚙️ Admin Panel</a><br>
+                <a href="/api/status" target="_blank" style="color: #007bff; text-decoration: none;">🔌 NASA API Status</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div id="loadingIndicator" class="loading">
+                <div class="loading-spinner"></div>
+                <div>Select a city to view real-time NASA satellite data</div>
+            </div>
+
+            <div id="dashboardContent" style="display: none;">
+                <div class="metrics-grid">
+                    <div class="metric-card wellbeing">
+                        <h4>🌟 Urban Wellbeing Index</h4>
+                        <div class="metric-value" id="wellbeingIndex">--</div>
+                        <div class="metric-label">Overall Health Score</div>
+                        <div class="metric-sub" id="wellbeingTrend">--</div>
+                    </div>
+
+                    <div class="metric-card air-quality">
+                        <h4>🌬️ Air Quality Index</h4>
+                        <div class="metric-value" id="airQualityIndex">--</div>
+                        <div class="metric-label" id="airQualityLabel">--</div>
+                        <div class="metric-sub" id="airQualityStatus">--</div>
+                    </div>
+
+                    <div class="metric-card water-security">
+                        <h4>💧 Water Security</h4>
+                        <div class="metric-value" id="waterSecurity">--</div>
+                        <div class="metric-label">Groundwater Change (cm)</div>
+                        <div class="metric-sub" id="floodRisk">--</div>
+                    </div>
+
+                    <div class="metric-card vegetation">
+                        <h4>🌿 Green Coverage</h4>
+                        <div class="metric-value" id="greenCoverage">--</div>
+                        <div class="metric-label">Urban Green Space (%)</div>
+                        <div class="metric-sub" id="ndviValue">--</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>🗺️ Satellite Monitoring Location</h3>
+                    <div id="map"></div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>📈 Air Quality Trends (Real NASA Data)</h3>
+                    <canvas id="airQualityChart" height="80"></canvas>
+                </div>
+
+                <div class="nasa-info">
+                    <p>🛰️ <strong>Live NASA Satellite Integration</strong></p>
+                    <div style="margin: 10px 0;">
+                        <span class="satellite-status satellite-active" id="tempoStatus">TEMPO</span>
+                        <span class="satellite-status satellite-active" id="omiStatus">OMI/Aura</span>
+                        <span class="satellite-status satellite-active" id="graceStatus">GRACE</span>
+                        <span class="satellite-status satellite-active" id="modisStatus">MODIS</span>
+                        <span class="satellite-status satellite-active" id="landsatStatus">Landsat</span>
+                    </div>
+                    <p><strong>Real-time data from NASA's operational Earth observation satellites</strong></p>
+                    <p id="lastUpdated"><strong>Last Updated:</strong> --</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let map;
+        let currentLocationId = null;
+        let airQualityChart;
+        let nasaApiConnected = false;
+        const API_BASE = window.location.origin + '/api';
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🌍 UrbanWell NASA Dashboard Starting...');
+            loadLocations();
+            checkNasaApiStatus();
+        });
+
+        // Check NASA API status
+        async function checkNasaApiStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const status = await response.json();
+
+                nasaApiConnected = status.nasa_api_status.authenticated;
+
+                const statusElement = document.getElementById('nasaStatus');
+                if (nasaApiConnected) {
+                    statusElement.textContent = '🛰️ NASA APIs Connected';
+                    statusElement.className = 'nasa-status nasa-connected';
+                } else {
+                    statusElement.textContent = '⚠️ Using Simulation';
+                    statusElement.className = 'nasa-status nasa-disconnected';
+                }
+
+                console.log(`🌍 NASA API Status: ${nasaApiConnected ? 'Connected' : 'Simulation'}`);
+
+            } catch (error) {
+                console.error('❌ Error checking NASA status:', error);
+                const statusElement = document.getElementById('nasaStatus');
+                statusElement.textContent = '❌ API Check Failed';
+                statusElement.className = 'nasa-status nasa-disconnected';
+            }
+        }
+
+        // Load locations from API
+        async function loadLocations() {
+            try {
+                console.log('📍 Loading locations...');
+                const response = await fetch(`${API_BASE}/locations`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const locations = await response.json();
+                console.log(`✅ Loaded ${locations.length} locations`);
+
+                const locationList = document.getElementById('locationList');
+                locationList.innerHTML = '';
+
+                if (locations.length === 0) {
+                    locationList.innerHTML = '<div class="error-message">No locations found. <a href="/admin" target="_blank">Add cities</a></div>';
+                    return;
+                }
+
+                locations.forEach((location, index) => {
+                    const locationDiv = document.createElement('div');
+                    locationDiv.className = 'location-item';
+                    locationDiv.onclick = () => selectLocation(location, locationDiv);
+
+                    locationDiv.innerHTML = `
+                        <h4>${location.name}</h4>
+                        <small>📍 ${location.latitude.toFixed(2)}°N, ${location.longitude.toFixed(2)}°E</small>
+                        <small>👥 Population: ${(location.population / 1000000).toFixed(1)}M</small>
+                        ${location.area ? `<small>📏 Area: ${location.area} km²</small>` : ''}
+                        <div class="data-source-badge ${nasaApiConnected ? 'nasa-data' : 'simulation-data'}" id="source-${location.id}">
+                            ${nasaApiConnected ? '🛰️ NASA Data' : '🧪 Simulation'}
+                        </div>
+                    `;
+
+                    locationList.appendChild(locationDiv);
+                });
+
+                // Select first location by default
+                if (locations.length > 0) {
+                    const firstLocationElement = locationList.querySelector('.location-item');
+                    selectLocation(locations[0], firstLocationElement);
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading locations:', error);
+                const locationList = document.getElementById('locationList');
+                locationList.innerHTML = `
+                    <div class="error-message">
+                        <strong>Error loading cities</strong><br>
+                        ${error.message}<br>
+                        <small>Make sure the server is running on port 5000</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Select a location and load its data
+        async function selectLocation(location, element) {
+            console.log(`🏙️ Selecting ${location.name} - fetching NASA satellite data...`);
+            currentLocationId = location.id;
+
+            // Update active location in sidebar
+            document.querySelectorAll('.location-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+
+            // Show loading
+            document.getElementById('loadingIndicator').style.display = 'flex';
+            document.getElementById('dashboardContent').style.display = 'none';
+
+            try {
+                console.log(`📊 Loading NASA data for ${location.name}...`);
+
+                // Load all data in parallel
+                const [dashboardResponse, alertsResponse, historicalResponse] = await Promise.all([
+                    fetch(`${API_BASE}/dashboard/${location.id}`),
+                    fetch(`${API_BASE}/alerts/${location.id}`),
+                    fetch(`${API_BASE}/historical/${location.id}?days=7`)
+                ]);
+
+                if (!dashboardResponse.ok) {
+                    throw new Error(`Dashboard API error: ${dashboardResponse.status}`);
+                }
+
+                const dashboard = await dashboardResponse.json();
+                const alerts = alertsResponse.ok ? await alertsResponse.json() : [];
+                const historical = historicalResponse.ok ? await historicalResponse.json() : { air_quality: [] };
+
+                console.log(`✅ NASA data loaded for ${location.name}`, dashboard);
+
+                // Update satellite status indicators
+                updateSatelliteStatus(dashboard);
+
+                // Update dashboard
+                updateDashboard(dashboard, location);
+                updateAlerts(alerts);
+                updateCharts(historical);
+
+                // Show dashboard
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+
+            } catch (error) {
+                console.error(`❌ Error loading NASA data for ${location.name}:`, error);
+                document.getElementById('loadingIndicator').innerHTML = `
+                    <div class="error-message">
+                        <strong>Error loading NASA data for ${location.name}</strong><br>
+                        ${error.message}<br>
+                        <small>Please try again or select a different city</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Update satellite status indicators
+        function updateSatelliteStatus(dashboard) {
+            const satellites = ['tempo', 'omi', 'grace', 'modis', 'landsat'];
+            const isNasaData = dashboard.nasa_api_status || 
+                              (dashboard.air_quality && dashboard.air_quality.source && dashboard.air_quality.source.includes('NASA'));
+
+            satellites.forEach(sat => {
+                const element = document.getElementById(sat + 'Status');
+                if (element) {
+                    if (isNasaData) {
+                        element.className = 'satellite-status satellite-active';
+                    } else {
+                        element.className = 'satellite-status satellite-inactive';
+                    }
+                }
+            });
+        }
+
+        // Update dashboard metrics
+        function updateDashboard(dashboard, location) {
+            console.log('📈 Updating dashboard with NASA satellite metrics...');
+
+            // Update wellbeing index
+            const wellbeingIndex = Math.round(dashboard.wellbeing_index);
+            document.getElementById('wellbeingIndex').textContent = wellbeingIndex;
+            document.getElementById('wellbeingTrend').textContent = getWellbeingDescription(wellbeingIndex);
+
+            // Update air quality with data source info
+            if (dashboard.air_quality) {
+                const aqi = dashboard.air_quality.aqi;
+                document.getElementById('airQualityIndex').textContent = aqi;
+                document.getElementById('airQualityLabel').textContent = getAQILabel(aqi);
+                document.getElementById('airQualityStatus').innerHTML = `
+                    <span class="status-indicator ${getAQIStatusClass(aqi)}"></span>
+                    PM2.5: ${dashboard.air_quality.pm25.toFixed(1)} µg/m³ (${dashboard.air_quality.source || 'NASA'})
+                `;
+            }
+
+            // Update water security
+            if (dashboard.water_security) {
+                const level = dashboard.water_security.groundwater_level;
+                document.getElementById('waterSecurity').textContent = `${level > 0 ? '+' : ''}${level.toFixed(1)}`;
+                document.getElementById('floodRisk').textContent = `Flood Risk: ${dashboard.water_security.flood_risk} (${dashboard.water_security.source || 'NASA'})`;
+            }
+
+            // Update vegetation
+            if (dashboard.vegetation) {
+                document.getElementById('greenCoverage').textContent = `${dashboard.vegetation.green_coverage.toFixed(1)}%`;
+                document.getElementById('ndviValue').textContent = `NDVI: ${dashboard.vegetation.ndvi.toFixed(3)} (${dashboard.vegetation.source || 'NASA'})`;
+            }
+
+            // Update timestamp with NASA status
+            document.getElementById('lastUpdated').innerHTML = `
+                <strong>Last Updated:</strong> ${new Date(dashboard.last_updated).toLocaleString()} 
+                ${dashboard.nasa_api_status ? '🛰️' : '🧪'}
+            `;
+
+            // Update map
+            updateMap(location, dashboard);
+        }
+
+        // Update alerts section
+        function updateAlerts(alerts) {
+            const alertsSection = document.getElementById('alertsSection');
+            const alertsList = document.getElementById('alertsList');
+
+            if (alerts && alerts.length > 0) {
+                console.log(`🚨 Displaying ${alerts.length} environmental alerts from NASA data`);
+                alertsSection.style.display = 'block';
+                alertsList.innerHTML = '';
+
+                alerts.forEach(alert => {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = `alert alert-${alert.severity}`;
+                    alertDiv.innerHTML = `
+                        <strong>${alert.type.replace('_', ' ').toUpperCase()}</strong>
+                        <p>${alert.message}</p>
+                        <small>⏰ ${new Date(alert.timestamp).toLocaleString()}</small>
+                    `;
+                    alertsList.appendChild(alertDiv);
+                });
+            } else {
+                alertsSection.style.display = 'none';
+            }
+        }
+
+        // Update charts with NASA data
+        function updateCharts(historical) {
+            if (historical.air_quality && historical.air_quality.length > 0) {
+                console.log(`📊 Updating air quality chart with ${historical.air_quality.length} NASA data points`);
+
+                const ctx = document.getElementById('airQualityChart').getContext('2d');
+
+                // Destroy existing chart
+                if (airQualityChart) {
+                    airQualityChart.destroy();
+                }
+
+                const data = historical.air_quality.slice(0, 7).reverse();
+                const hasNasaData = data.some(item => item.data_source && item.data_source.includes('NASA'));
+
+                airQualityChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(item => {
+                            const date = new Date(item.timestamp);
+                            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }),
+                        datasets: [
+                            {
+                                label: `AQI ${hasNasaData ? '(NASA TEMPO/OMI)' : '(Simulated)'}`,
+                                data: data.map(item => item.aqi),
+                                borderColor: '#e74c3c',
+                                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#e74c3c',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5
+                            },
+                            {
+                                label: `NO₂ ${hasNasaData ? '(NASA Satellite)' : '(Simulated)'}`,
+                                data: data.map(item => item.no2),
+                                borderColor: '#9b59b6',
+                                backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                                tension: 0.4,
+                                fill: false,
+                                pointBackgroundColor: '#9b59b6',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Concentration / Index'
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                borderColor: '#3498db',
+                                borderWidth: 1
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize and update map
+        function updateMap(location, dashboard) {
+            if (!map) {
+                console.log('🗺️ Initializing satellite monitoring map...');
+                map = L.map('map').setView([location.latitude, location.longitude], 10);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18
+                }).addTo(map);
+            } else {
+                map.setView([location.latitude, location.longitude], 10);
+
+                // Remove existing markers
+                map.eachLayer(layer => {
+                    if (layer instanceof L.Marker) {
+                        map.removeLayer(layer);
+                    }
+                });
+            }
+
+            // Create marker with data source info
+            const aqi = dashboard.air_quality ? dashboard.air_quality.aqi : 75;
+            const isNasaData = dashboard.nasa_api_status || 
+                              (dashboard.air_quality && dashboard.air_quality.source && dashboard.air_quality.source.includes('NASA'));
+
+            // Add marker with popup
+            const marker = L.marker([location.latitude, location.longitude])
+                .addTo(map)
+                .bindPopup(`
+                    <div style="text-align: center; min-width: 220px;">
+                        <h4>${location.name}</h4>
+                        <p><strong>Data Source:</strong> ${isNasaData ? '🛰️ NASA Satellites' : '🧪 Simulation'}</p>
+                        <p><strong>Wellbeing Index:</strong> ${Math.round(dashboard.wellbeing_index)}/100</p>
+                        <p><strong>Air Quality:</strong> ${aqi} (${getAQILabel(aqi)})</p>
+                        <p><strong>Population:</strong> ${(location.population / 1000000).toFixed(1)}M</p>
+                        ${dashboard.water_security ? `<p><strong>Flood Risk:</strong> ${dashboard.water_security.flood_risk}</p>` : ''}
+                        <small>Coordinates: ${location.latitude.toFixed(4)}°, ${location.longitude.toFixed(4)}°</small>
+                    </div>
+                `)
+                .openPopup();
+        }
+
+        // Helper functions
+        function getAQILabel(aqi) {
+            if (aqi <= 50) return 'Good';
+            if (aqi <= 100) return 'Moderate';
+            if (aqi <= 150) return 'Unhealthy for Sensitive';
+            if (aqi <= 200) return 'Unhealthy';
+            if (aqi <= 300) return 'Very Unhealthy';
+            return 'Hazardous';
+        }
+
+        function getAQIColor(aqi) {
+            if (aqi <= 50) return '#00e400';
+            if (aqi <= 100) return '#ffff00';
+            if (aqi <= 150) return '#ff7e00';
+            if (aqi <= 200) return '#ff0000';
+            if (aqi <= 300) return '#8f3f97';
+            return '#7e0023';
+        }
+
+        function getAQIStatusClass(aqi) {
+            if (aqi <= 100) return 'status-good';
+            if (aqi <= 150) return 'status-moderate';
+            return 'status-unhealthy';
+        }
+
+        function getWellbeingDescription(index) {
+            if (index >= 80) return 'Excellent urban health';
+            if (index >= 60) return 'Good urban conditions';
+            if (index >= 40) return 'Moderate conditions';
+            if (index >= 20) return 'Poor urban health';
+            return 'Critical conditions';
+        }
+
+        // Error handling for failed requests
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+        });
+
+        // Log when the dashboard is fully loaded
+        window.addEventListener('load', function() {
+            console.log('✅ UrbanWell NASA Dashboard loaded successfully');
+        });
+    </script>
+</body>
+</html>

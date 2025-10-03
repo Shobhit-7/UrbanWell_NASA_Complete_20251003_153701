@@ -1,0 +1,47 @@
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+
+# ---- Virtual Environments ----
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+env/
+
+# ---- Credentials ----
+*.env
+*.key
+*.secret
+*.token
+
+# ---- Logs & Caches ----
+*.log
+*.cache
+*.gz
+*.out
+
+# ---- OS Specific ----
+.DS_Store
+Thumbs.db
+
+# ---- IDE Specific ----
+.vscode/
+.idea/
+
+# ---- Data files (if generated locally) ----
+*.csv
+*.hdf
+*.nc
+*.json
+
+# ---- Build/Deployment ----
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
