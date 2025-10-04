@@ -12,6 +12,7 @@ venv/
 ENV/
 env.bak/
 env/
+.env.template/
 
 # ---- Credentials ----
 *.env
