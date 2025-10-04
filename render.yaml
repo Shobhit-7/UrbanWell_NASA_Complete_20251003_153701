@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: urbanwell-nasa
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python urbanwell_nasa_backend.py
+    envVars:
+      - key: NASA_EARTHDATA_USERNAME
+        sync: false
+      - key: NASA_EARTHDATA_PASSWORD
+        sync: false
