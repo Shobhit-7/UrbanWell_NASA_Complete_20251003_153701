@@ -92,3 +92,6 @@ click==8.1.7
 #
 # For minimal installation (if you have issues):
 # Just install: Flask flask-cors earthaccess requests python-dotenv numpy pandas
+setuptools>=68.0.0
+wheel
+
